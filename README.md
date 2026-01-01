@@ -29,8 +29,8 @@ A robust, automated Python service that monitors Stocks, ETFs, and Commodities i
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/yourusername/market-monitor.git](https://github.com/yourusername/market-monitor.git)
-    cd market-monitor
+    git clone [https://github.com/yourusername/tradingemailalerts.git](https://github.com/GouthamOfTheNP/TradingEmailAlerts.git)
+    cd TradingEmailAlerts
     ```
 
 2.  **Install dependencies:**
