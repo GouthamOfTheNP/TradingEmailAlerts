@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-import time
 import io
-import os
 import logging
+import os
 import smtplib
+import time
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pandas_ta as ta
 import pytz
 import schedule
 import yfinance as yf
-import pandas as pd
-import pandas_ta as ta
-import numpy as np
-import matplotlib.pyplot as plt
 from datetime import datetime
 from email.message import EmailMessage
 from google import genai
@@ -31,7 +31,6 @@ TICKERS = STOCKS + ETFS + COMMODITIES + ENERGY
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
-TO_EMAIL = os.getenv("TO_EMAIL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 SIGNIFICANT_PRICE_CHANGE_PCT = 1.5
@@ -46,16 +45,26 @@ ADX_TREND = 25
 hourly_baseline = {}
 hourly_email_queue = {}
 
+emails_list = []
+
+with open("emails.txt", "r") as emails:
+    emails_list.append(emails.readline().strip())
+
 
 def get_timeframe_params(ticker):
+    """Custome time frame configurations, can add more if needed"""
     if ticker in STOCKS: return "3mo", "1d"
     elif ticker in ETFS: return "6mo", "1d"
     elif ticker in COMMODITIES: return "1y", "1d"
     elif ticker in ENERGY: return "6mo", "1d"
+
+    # Add more below if you want to
+
     return "3mo", "1d"
 
 
 def get_prediction_label(score):
+    """Converts numeric score to color for HTML rendering purposes"""
     if score >= 5: return "STRONG BUY", "#27ae60"
     elif score >= 3: return "BUY", "#2ecc71"
     elif score >= 1: return "WEAK BUY", "#abd5bb"
@@ -66,6 +75,7 @@ def get_prediction_label(score):
 
 
 def generate_ai_summary(ticker_data):
+    """Gemini prompt engineering xD; I am not going to be replaced by this"""
     if not GEMINI_API_KEY:
         logger.warning("No Gemini API Key found. Skipping AI summary.")
         return "AI Summary unavailable (No Key provided)."
@@ -87,6 +97,7 @@ def generate_ai_summary(ticker_data):
     Provide a concise HTML summary (no markdown code blocks, just raw HTML tags like <p>, <ul>, <b>).
     1. Why these specific stocks are moving right now based on the indicators.
     2. The collective sentiment (Bullish/Bearish).
+    3. Recent news on these stocks, if any.
     Keep it under 150 words.
     """
 
@@ -102,6 +113,7 @@ def generate_ai_summary(ticker_data):
 
 
 def compute_all_indicators(df):
+    """Constructs DataFrame of indicators from YFinance DataFrame"""
     df["EMA20"] = df["Close"].ewm(span=20, adjust=False).mean()
     df["EMA50"] = df["Close"].ewm(span=50, adjust=False).mean()
 
@@ -138,6 +150,7 @@ def compute_all_indicators(df):
 
 
 def analyze_ticker(df, ticker):
+    """Returns metrics from indicator DataFrame"""
     alerts = []
     signal_strength = 0
     df = compute_all_indicators(df)
@@ -196,6 +209,7 @@ def analyze_ticker(df, ticker):
 
 
 def is_significant_shift(ticker, current_score, current_price, current_pred, current_vol_ratio):
+    """Checks if the current shift is massively different from the hourly baseline"""
     if ticker not in hourly_baseline:
         return False
 
@@ -225,6 +239,7 @@ def is_significant_shift(ticker, current_score, current_price, current_pred, cur
 
 
 def draw_chart(df, ticker):
+    """Draws chart of RSI and Bollinger Bands to illustrate movements to recipient"""
     plt.style.use('seaborn-v0_8-darkgrid')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), gridspec_kw={'height_ratios': [3, 1]})
     fig.patch.set_facecolor('#f8f9fa')
@@ -253,6 +268,7 @@ def draw_chart(df, ticker):
 
 
 def send_email(subject, ticker_data, timestamp, images, ai_summary):
+    """Configuration for sending an email to desired user"""
     if not EMAIL_USER or not EMAIL_PASS:
         logger.error("Email credentials missing. Skipping email.")
         return
@@ -320,7 +336,6 @@ def send_email(subject, ticker_data, timestamp, images, ai_summary):
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = EMAIL_USER
-    msg["To"] = TO_EMAIL
     msg.set_content("This email requires an HTML-compatible client.")
     html_part = msg.add_alternative(html_body, subtype="html")
 
@@ -331,13 +346,16 @@ def send_email(subject, ticker_data, timestamp, images, ai_summary):
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
-            server.send_message(msg)
+            for recipient in emails_list:
+                msg["To"] = recipient
+                server.send_message(msg)
         logger.info("Email sent successfully.")
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
 
 
 def check_market_vs_baseline():
+    """Checks current stock movements against baseline"""
     if not is_market_open():
         logger.info("Market is closed. Skipping check.")
         return
@@ -379,6 +397,7 @@ def check_market_vs_baseline():
 
 
 def process_hourly_cycle():
+    """Process data from the hour and send email about stocks if necessary"""
     if not is_market_open():
         logger.info("Market is closed. Skipping hourly cycle.")
         return
@@ -469,7 +488,7 @@ def send_weekend_email(weekly_data):
     """Sends a simplified text/html table of the week's winners and losers."""
     msg = EmailMessage()
     msg["Subject"] = f"Weekly Market Wrap: {datetime.now().strftime('%Y-W%U')}"
-    msg["From"], msg["To"] = EMAIL_USER, TO_EMAIL
+    msg["From"] = EMAIL_USER
 
     rows = ""
     for d in weekly_data:
@@ -490,7 +509,9 @@ def send_weekend_email(weekly_data):
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
+        for recipient in emails_list:
+            msg["To"] = recipient
+            server.send_message(msg)
 
 
 logger.info("Starting Market Monitor Service...")
