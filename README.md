@@ -1,6 +1,6 @@
-# 📈 AI-Powered Financial Market Monitor
+# Trading Email Alerts
 
-A robust, automated Python service that monitors Stocks, ETFs, and Commodities in real-time. It combines technical analysis with Generative AI (Google Gemini) to detect significant market shifts and send detailed HTML email alerts.
+An automated Python service that monitors stocks, ETFs, commodities, and others in real-time. It combines technical analysis on data from YFinance with Generative AI (Google Gemini 2.0 Flash) to detect significant market shifts and send detailed HTML email alerts.
 
 ## Features
 
@@ -29,7 +29,7 @@ A robust, automated Python service that monitors Stocks, ETFs, and Commodities i
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/yourusername/tradingemailalerts.git](https://github.com/GouthamOfTheNP/TradingEmailAlerts.git)
+    git clone https://github.com/GouthamOfTheNP/TradingEmailAlerts.git
     cd TradingEmailAlerts
     ```
 
@@ -44,8 +44,15 @@ A robust, automated Python service that monitors Stocks, ETFs, and Commodities i
     ```bash
     export EMAIL_USER="your_email@gmail.com"
     export EMAIL_PASS="your_16_char_app_password"
-    export TO_EMAIL="recipient_email@example.com"
     export GEMINI_API_KEY="your_google_gemini_api_key"
+    ```
+
+4.  **Set up the Email Recipient List:** You must set up the email recipient list in order for this software to email people. Set it up in `emails.txt`.
+
+5.  **Run:**
+    Once done with setting everything up, feel free to run the program with:
+    ```bash
+    python main.py
     ```
 
 ## Configuration
@@ -56,3 +63,24 @@ You can modify the `STOCKS`, `ETFS`, and `COMMODITIES` lists at the top of the s
 STOCKS = ["AAPL", "GOOG", "BAC", "JPM", "CSCO"]
 ETFS = ["VOO", "IEFA", "RSST"]
 COMMODITIES = ["GLD", "SLV"]
+```
+
+or you can add different categories and update them in `get_timeframe_params` (example below):
+
+```python
+TECH = ["APPL", "GOOG"]
+FUNDS = ["BRK.B"]
+```
+
+```python
+def get_timeframe_params(ticker):
+    ...
+
+    elif ticker in TECH: return "1mo", "1d"
+    elif ticker in FUNDS: return "2y", "1d"
+```
+
+You can, as mentioned above, add emails you want as recipients in `emails.txt`, either manually or through a client/script.
+
+---
+Script for easy configuration will come soon.
