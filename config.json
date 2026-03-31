@@ -1,0 +1,21 @@
+{
+    "tickers": [
+        "AAPL",
+        "MSFT",
+        "TSLA"
+    ],
+    "ticker_map": {
+        "AAPL": [
+            "5d",
+            "5m"
+        ],
+        "MSFT": [
+            "5d",
+            "5m"
+        ]
+    },
+    "defaults": [
+        "5d",
+        "5m"
+    ]
+}

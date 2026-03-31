@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import io
+import json
 import logging
 import os
 import smtplib
@@ -22,12 +23,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def load_config():
+    with open("config.json", "r") as f:
+        return json.load(f)
+
+config = load_config()
+
 STOCKS = ["AAPL", "GOOG", "BAC", "JPM", "CSCO"]
 ETFS = ["VOO", "IEFA", "RSST"]
 COMMODITIES = ["GLD", "SLV"]
 ENERGY = ["XOM"]
 
-TICKERS = STOCKS + ETFS + COMMODITIES + ENERGY
+TICKERS = config.get("tickers", [])
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
@@ -48,19 +55,17 @@ hourly_email_queue = {}
 emails_list = []
 
 with open("emails.txt", "r") as emails:
-    emails_list.append(emails.readline().strip())
+    for line in emails:
+        emails_list.append(line.strip())
 
 
 def get_timeframe_params(ticker):
-    """Custome time frame configurations, can add more if needed"""
-    if ticker in STOCKS: return "3mo", "1d"
-    elif ticker in ETFS: return "6mo", "1d"
-    elif ticker in COMMODITIES: return "1y", "1d"
-    elif ticker in ENERGY: return "6mo", "1d"
-
-    # Add more below if you want to
-
-    return "3mo", "1d"
+    return (
+        config["ticker_map"].get(
+            ticker,
+            config["defaults"]
+        )
+    )
 
 
 def get_prediction_label(score):

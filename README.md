@@ -21,7 +21,7 @@ An automated Python service that monitors stocks, ETFs, commodities, and others 
 
 ## Prerequisites
 
-* Python 3.8+
+* Python 3.12+
 * A Gmail account with an **App Password** (for SMTP).
 * A Google Cloud Project with the **Gemini API** enabled.
 
@@ -47,7 +47,7 @@ An automated Python service that monitors stocks, ETFs, commodities, and others 
     export GEMINI_API_KEY="your_google_gemini_api_key"
     ```
 
-4.  **Set up the Email Recipient List:** You must set up the email recipient list in order for this software to email people. Set it up in `emails.txt`.
+4.  **Configure Script** Use `config.py` to configure the email list and tickers
 
 5.  **Run:**
     Once done with setting everything up, feel free to run the program with:
@@ -57,30 +57,35 @@ An automated Python service that monitors stocks, ETFs, commodities, and others 
 
 ## Configuration
 
-You can modify the `STOCKS`, `ETFS`, and `COMMODITIES` lists at the top of the script to track your preferred assets:
-
-```python
-STOCKS = ["AAPL", "GOOG", "BAC", "JPM", "CSCO"]
-ETFS = ["VOO", "IEFA", "RSST"]
-COMMODITIES = ["GLD", "SLV"]
+Ticker config is stored in `config.json` with the following structure:
+```json
+{
+    "tickers": [
+        "AAPL",
+        "MSFT",
+        "TSLA"
+    ],
+    "ticker_map": {
+        "AAPL": [
+            "5d",
+            "5m"
+        ],
+        "MSFT": [
+            "5d",
+            "5m"
+        ]
+    },
+    "defaults": [
+        "5d",
+        "5m"
+    ]
+}
 ```
 
-or you can add different categories and update them in `get_timeframe_params` (example below):
+| Field | Type | Description |
+|---|---|---|
+| `tickers` | `list[str]` | All tracked ticker symbols |
+| `ticker_map` | `dict[str, list[str]]` | Per-ticker timeframe overrides |
+| `defaults` | `list[str]` | Fallback timeframes for tickers not in `ticker_map` |
 
-```python
-TECH = ["APPL", "GOOG"]
-FUNDS = ["BRK.B"]
-```
-
-```python
-def get_timeframe_params(ticker):
-    ...
-
-    elif ticker in TECH: return "1mo", "1d"
-    elif ticker in FUNDS: return "2y", "1d"
-```
-
-You can, as mentioned above, add emails you want as recipients in `emails.txt`, either manually or through a client/script.
-
----
-Script for easy configuration will come soon.
+Email list is stored in `emails.txt`
