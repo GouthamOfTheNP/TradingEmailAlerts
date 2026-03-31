@@ -29,11 +29,6 @@ def load_config():
 
 config = load_config()
 
-STOCKS = ["AAPL", "GOOG", "BAC", "JPM", "CSCO"]
-ETFS = ["VOO", "IEFA", "RSST"]
-COMMODITIES = ["GLD", "SLV"]
-ENERGY = ["XOM"]
-
 TICKERS = config.get("tickers", [])
 
 EMAIL_USER = os.getenv("EMAIL_USER")
